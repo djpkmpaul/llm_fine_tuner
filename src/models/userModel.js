@@ -1,14 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import Llm from "./llmModel";
 
-
-const token = new mongoose.Schema({
-  name: {
-    type: String
-  }, 
-  tokenId: {
-    type: String 
-  }
-});
+if(mongoose.models.users){
+  delete mongoose.models.users
+}
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -17,11 +12,11 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true
   },
-  email: { 
-    type: String, 
+  email: {
+    type: String,
     required: [true, "Please provide an email"],
     unique: true
-  }, 
+  },
   password: {
     type: String,
     required: [true, "Please provide a password"],
@@ -38,13 +33,14 @@ const userSchema = new mongoose.Schema({
   //? For password reset
   forgotPasswordToken: String,
   forgotPasswordTokenExpiry: Date,
-  
+
   //? For verifying user
   verifyToken: String,
   verifyTokenExpiry: Date,
 
-  tokens: {
-    type: [token],
+  llms: [{
+    type: Schema.Types.ObjectId,
+    ref: "Llm",
     required: false,
     default: [], // Set to empty array as default
     validate: {
@@ -54,12 +50,12 @@ const userSchema = new mongoose.Schema({
       },
       message: 'A user can only have up to 4 tokens.'
     }
-  }
+  }]
 });
 
 // Middleware to ensure that no more than 4 tokens are added before saving
 userSchema.pre('save', function (next) {
-  if (this.tokens.length > 4) {
+  if (this.llms.length > 4) {
     return next(new Error('A user can only have up to 4 tokens.'));
   }
   next();

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import axios from 'axios'
+import { useMySession } from '@/app/helper/MySessionContext'
 
 export default function Login() {
 
@@ -17,14 +18,28 @@ export default function Login() {
   })
   const router = useRouter()
 
+  const { userSessionDetails, setUserSessionDetails } = useMySession();
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       const response = await axios.post('/api/users/login', user);
       toast.success(response.data.message);
-      router.push(`/about/${user.username}`)
+      router.push("/") // -> LLM table
+
     } catch (error: any) {
       toast.error(`ERROR: ${error.response.data.error}`);
+      setUser({ ...user, username: '', password: '' });
+
+      if (error.response.data.error === "User not found!") {
+        router.push(`/register`);
+      }
+
+      if (error.response.data.error === "Email not verified") {
+        console.log(error.response.data);
+        const userEmail = error.response.data.foundUser.email;
+        router.push(`/verify?email=${userEmail}`);
+      }
+
     }
   }
 
@@ -68,7 +83,7 @@ export default function Login() {
 
             <div>
               <Button type="submit" className="w-full">
-                Sign in
+                Log In
               </Button>
               <Toaster />
             </div>

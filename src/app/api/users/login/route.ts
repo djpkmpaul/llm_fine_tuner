@@ -5,10 +5,10 @@ import mongoose from "mongoose";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+connect();
 export async function POST(request: NextRequest) {
     try {
         const { username, password } = await request.json();
-        console.log(username, password);
         const foundUser = await User.findOne({ username });
         if (!foundUser) {
             return NextResponse.json({ error: "User not found!", success: false }, { status: 404 });
@@ -18,7 +18,11 @@ export async function POST(request: NextRequest) {
         if (!comparedPassword) {
             return NextResponse.json({ error: "Password is incorrect!", success: false }, { status: 400 });
         }
-
+        console.log(foundUser);
+        if(!foundUser.isVerified){
+            console.log(`Redirecting to ${process.env.DOMAIN}/verify`);
+            return NextResponse.json({ error: "Email not verified", success: false, redirect: '/verify', foundUser }, { status: 300 });
+        }
         // Create a session token 
         const userSessionData = {
             id: foundUser._id,
@@ -28,12 +32,12 @@ export async function POST(request: NextRequest) {
 
         const userSessionToken = jwt.sign(userSessionData, process.env.USER_SESSION_SECRET!,
             {
-                expiresIn: "1hr"
+                expiresIn: "1d"
             }
         );
         const response = NextResponse.json({
             message: "Successfully logged in",
-            success: true
+            success: true,
         },
             { status: 200 }
         );

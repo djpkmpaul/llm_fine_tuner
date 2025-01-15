@@ -11,21 +11,22 @@ export async function POST(request: NextRequest) {
         const reqBody = await request.json();
         const {username, email, password} = reqBody;
         
-        const foundEmail = await User.find({email});
+        const foundEmail = await User.findOne({email});
+        console.log("Found Email: ", foundEmail);
         if(foundEmail){
             return NextResponse.json({
                 error: "Email already registered. User exists.",
                 success: false
             }, {status: 400});
         }
-        const foundUsername = await User.find({username});
+        const foundUsername = await User.findOne({username});
         if(foundUsername){
             return NextResponse.json({
                 error: "Username already exists.",
                 success: false
             }, {status: 400});
         }
-
+        console.log("Found no user with this email and password");
         const salt = await bcryptjs.genSalt(10);
         const hashedPassword = await bcryptjs.hash(password, salt);
         

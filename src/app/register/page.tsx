@@ -14,20 +14,26 @@ export default function Register() {
     username: '',
     email: '',
     password: ''
-  }) 
+  });
+  
   const router = useRouter()
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       const response = await axios.post('/api/users/signup', user);
-      toast.success("here is your toast")
+      toast.success(`${response.data.message}`) // set timeout if possible 
+      // email will be sent
+      const emailResponse = await axios.post('/api/users/sendVerificationEmail', {email: user.email})
+      // sendEmail(user.email);
+      toast.success(`Mail sent. Please Verify Email`);
       setUser({
         username: '',
         email: '',
         password: ''
       })
-      router.push('/login')
+      router.push('/verify')
     } catch (error : any) {
       toast.error(`ERROR: ${error.response.data.error}`);
       router.push('/register');
