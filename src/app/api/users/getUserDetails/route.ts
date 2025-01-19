@@ -1,12 +1,13 @@
 import { connect } from "@/dbconfig/dbconfig";
-import User from "@/models/userModel"
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, NextMiddleware } from "next/server";
 import jwt from "jsonwebtoken"
 
 connect();
+
 // to get the username and email to display on nav bar
 export async function GET(request: NextRequest) {
     try {
+                
         const encodedToken = request.cookies.get("userSession")?.value || ""
         if(!encodedToken){
             return NextResponse.json({error: "Empty token", success: false}, {status: 404});

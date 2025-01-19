@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
         if (error instanceof JsonWebTokenError) {
-            return NextResponse.json({ error: "Error occurred while decoding the token! " + error.message, success: false }, { status: 400 });
+            return NextResponse.json({ error: "Try Again with different token.\nError occurred while decoding the token!", success: false }, { status: 400 });
         }
         console.log(error);
         console.log(error.message);

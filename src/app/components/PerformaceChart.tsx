@@ -35,8 +35,8 @@ export default function PerformanceChart() {
     } satisfies ChartConfig;
 
     return (
-        <Card>
-            <CardHeader className="items-center pb-4">
+        <Card className="font-mono font-extrabold">
+            <CardHeader className="text-xl items-center pb-4">
                 <CardTitle>Fine-tuning v/s General Purpose LLM</CardTitle>
                 <CardDescription>
                     Comparing performance of general LLM and fine-tuned LLM for various tasks.
@@ -44,7 +44,6 @@ export default function PerformanceChart() {
             </CardHeader>
             <CardContent className="pb-0">
                 <div className="bg-secondary text-secondary-foreground dark:bg-white">
-                    <p className="py-3 m-3" ></p>
                     <ChartContainer config={chartConfig} className="min-h-[200px] w-[50vw]">
                         <BarChart accessibilityLayer data={chartData}>
                             <CartesianGrid vertical={false} />

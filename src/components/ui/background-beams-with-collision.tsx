@@ -14,63 +14,118 @@ export const BackgroundBeamsWithCollision = ({
   const parentRef = useRef<HTMLDivElement>(null);
 
   const beams = [
+    // Faster beams
     {
       initialX: 10,
       translateX: 10,
-      duration: 7,
-      repeatDelay: 3,
-      delay: 2,
+      duration: 3, // Fast
+      repeatDelay: 2,
+      delay: 1,
     },
     {
       initialX: 600,
       translateX: 600,
-      duration: 3,
-      repeatDelay: 3,
-      delay: 4,
+      duration: 2, // Fast
+      repeatDelay: 1,
+      delay: 2,
     },
     {
       initialX: 100,
       translateX: 100,
-      duration: 7,
-      repeatDelay: 7,
+      duration: 4, // Fast
+      repeatDelay: 3,
+      delay: 1,
       className: "h-6",
     },
+    
+    // Slower beams
     {
       initialX: 400,
       translateX: 400,
-      duration: 5,
-      repeatDelay: 14,
-      delay: 4,
+      duration: 10, // Slow
+      repeatDelay: 5,
+      delay: 3,
     },
     {
       initialX: 800,
       translateX: 800,
-      duration: 11,
-      repeatDelay: 2,
+      duration: 12, // Slow
+      repeatDelay: 6,
       className: "h-20",
     },
     {
       initialX: 1000,
       translateX: 1000,
-      duration: 4,
-      repeatDelay: 2,
+      duration: 8, // Slow
+      repeatDelay: 4,
       className: "h-12",
     },
+    
+    // Additional beams with varied speeds
     {
       initialX: 1200,
       translateX: 1200,
-      duration: 6,
-      repeatDelay: 4,
+      duration: 5, // Medium speed
+      repeatDelay: 3,
       delay: 2,
       className: "h-6",
     },
+    {
+      initialX: 1400,
+      translateX: 1400,
+      duration: 6, // Medium speed
+      repeatDelay: 4,
+      delay: 1,
+      className: "h-8",
+    },
+    {
+      initialX: 1600,
+      translateX: 1600,
+      duration: 7, // Medium speed
+      repeatDelay: 5,
+      delay: 3,
+      className: "h-10",
+    },
+    {
+      initialX: 1800,
+      translateX: 1800,
+      duration: 4, // Fast
+      repeatDelay: 2,
+      delay: 1,
+      className: "h-6",
+    },
+    {
+      initialX: 2000,
+      translateX: 2000,
+      duration: 9, // Slow
+      repeatDelay: 6,
+      delay: 4,
+      className: "h-12",
+    },
+    {
+      initialX: 2200,
+      translateX: 2200,
+      duration: 6, // Medium speed
+      repeatDelay: 4,
+      delay: 2,
+      className: "h-16",
+    },
+    {
+      initialX: 2400,
+      translateX: 2400,
+      duration: 3, // Fast
+      repeatDelay: 1,
+      delay: 1,
+      className: "h-4",
+    },
   ];
+  
 
   return (
     <div
       ref={parentRef}
       className={cn(
-        "h-96 md:h-[40rem] bg-gradient-to-b from-white to-neutral-100 dark:from-neutral-950 dark:to-neutral-800 relative flex items-center w-full justify-center overflow-hidden",
+        "h-[100vh] bg-gradient-to-b from-white to-neutral-100 dark:from-neutral-950 dark:to-neutral-800 relative flex items-center w-full justify-center overflow-hidden",
         // h-screen if you want bigger
         className
       )}

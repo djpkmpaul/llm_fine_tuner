@@ -21,7 +21,6 @@ export default function Header() {
         ...userSessionDetails,
         username: myToken.username,
         email: myToken.email
-
       });
     })
       .catch(e => {
@@ -40,7 +39,7 @@ export default function Header() {
     }
   }
   return (
-    <header className="sticky top-0 z-50 py-4 px-6 bg-zinc-800 text-white">
+    <header className="sticky w-[100%] top-0 z-50 py-4 px-6 bg-zinc-800 text-white">
       <nav className="flex justify-between items-center">
         <Link href="/" className="text-xl font-bold">LLM Fine-tuner</Link>
         {

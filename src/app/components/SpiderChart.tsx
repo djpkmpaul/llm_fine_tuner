@@ -61,8 +61,8 @@ const chartConfig = {
 
 export default function SpiderChart() {
   return (
-    <Card className="ml-3 bg-secondary text-secondary-foreground dark:bg-white">
-      <CardHeader className="items-center pb-4">
+    <Card className="font-mono ml-3 bg-secondary text-secondary-foreground dark:bg-white">
+      <CardHeader className="text-xl items-center pb-4">
         <CardTitle className="">Radar Chart - General vs Fine-Tuned LLM</CardTitle>
         <CardDescription>
           Comparing general LLM vs fine-tuned LLM across various metrics.
@@ -93,14 +93,6 @@ export default function SpiderChart() {
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="flex items-center gap-2 leading-none text-muted-foreground">
-          January - June 2024
-        </div>
-      </CardFooter>
     </Card>
   )
 }

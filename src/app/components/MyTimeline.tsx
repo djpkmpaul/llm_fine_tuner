@@ -1,93 +1,121 @@
-import {
-    Timeline,
-    TimelineItem,
-    TimelineTitle,
-    TimelineDescription,
-    TimelineTime,
-    TimelineHeader,
-  } from '@/components/timeline';
-  
-  import { TimelineItemType } from '@/types';
-  
-  const timelineData: TimelineItemType[] = [
+'use client'
+import React, { useEffect, useRef } from "react";
+import { Timeline } from "@/components/ui/timeline";
+import { AnimatePresence, motion, useInView } from "framer-motion";
+
+
+export function MyTimeline() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, {
+    amount: 1
+  })
+
+  useEffect(() => {
+    console.log(ref);
+    console.log("Div element is in view");
+  }, [isInView])
+
+  const animationOption = {
+    initial: { opacity: 0, x: -200, scale: 0.8 },
+    whileInView: { opacity: 1, x: 0, scale: 1 },
+    transition: { delay: 1., type: 'spring', bounce: 0.5 }
+  }
+  const contentData = [
     {
-      id: 1,
-      title: 'Upload Dataset',
-      description:
-        'Start by uploading your custom dataset in the supported format (e.g., CSV, JSON, or text files). Ensure the data is clean and relevant for fine-tuning.',
-      time: 'Step 1',
+      title: "Upload Dataset",
+      p: "Upload your dataset (CSV, JSON, or text). Ensure it's clean and ready for use.",
+      imgSrc: ['/1_upload_data.svg'],
     },
     {
-      id: 2,
-      title: 'Preprocess Data',
-      description:
-        'The platform automatically preprocesses your dataset (e.g., tokenization, cleaning, and formatting) to make it ready for fine-tuning.',
-      time: 'Step 2',
+      title: "Preprocess Data",
+      p: "The platform preprocesses the data for fine-tuning (e.g., tokenization).",
+      imgSrc: ['/2_preprocess.svg', '/2_token.png']
     },
     {
-      id: 3,
-      title: 'Select Base Model',
-      description:
-        'Choose a pre-trained LLM as the base model for fine-tuning. Options include popular models like GPT, BERT, or other supported architectures.',
-      time: 'Step 3',
+      title: "Select Base Model",
+      p: "Choose a pre-trained model (e.g., GPT, BERT) to base the fine-tuning on.",
+      imgSrc: ['/3_ai.svg', '/3_choose_model_removebg.png']
     },
     {
-      id: 4,
-      title: 'Configure Fine-Tuning Parameters',
-      description:
-        'Set fine-tuning parameters such as learning rate, number of epochs, batch size, and method (e.g., LoRA). These settings determine how the model learns.',
-      time: 'Step 4',
+      title: "Configure Parameters",
+      p: "Set parameters (learning rate, epochs, batch size) for fine-tuning.",
+      imgSrc: ['/4_set_params.svg']
     },
     {
-      id: 5,
-      title: 'Start Fine-Tuning',
-      description:
-        'Begin the fine-tuning process. The platform handles the backend operations, utilizing your provided dataset and configurations.',
-      time: 'Step 5',
+      title: "Start Fine-Tuning",
+      p: "Initiate fine-tuning with the provided dataset and configuration.",
+      imgSrc: ['/5_fine_tuning.svg']
     },
     {
-      id: 6,
-      title: 'Monitor Progress',
-      description:
-        'Track the fine-tuning progress via real-time charts and logs. This provides insights into model performance, loss metrics, and accuracy.',
-      time: 'Step 6',
+      title: "Monitor Progress",
+      p: "Track real-time progress through charts and logs.",
+      imgSrc: ['/6_monitor.svg', '/6_progress.svg']
     },
     {
-      id: 7,
-      title: 'Evaluate Model Performance',
-      description:
-        'Once fine-tuning is complete, evaluate the performance of the fine-tuned model using test datasets. Check accuracy, precision, recall, or other metrics.',
-      time: 'Step 7',
+      title: "Evaluate the Model",
+      p: "Evaluate model accuracy and metrics post fine-tuning.",
+      imgSrc: ['/7_evaluate.svg', '/7_analyse.svg']
     },
     {
-      id: 8,
-      title: 'Download or Deploy Model',
-      description:
-        'Download the fine-tuned model for offline use or deploy it directly via the platform’s APIs for integration into your application.',
-      time: 'Step 8',
+      title: "Deploy or Download",
+      p: "Deploy the model or download it for offline use.",
+      imgSrc: ['/8_download.png']
     },
-    {
-      id: 9,
-      title: 'Manage and Version Control',
-      description:
-        'Use the platform to manage your fine-tuned models, version control them, and revisit them for further improvements or updates.',
-      time: 'Step 9',
-    },
-  ];
-  
-  
-  export const MyTimeline = () => {
+  ]
+  const data = contentData.map((content, idx) => {
     return (
-      <Timeline className='mt-8'>
-        {timelineData.map((item) => (
-          <TimelineItem key={item.id}>
-            <TimelineHeader>
-              <TimelineTime>{item.time}</TimelineTime>
-              <TimelineTitle>{item.title}</TimelineTitle>
-            </TimelineHeader>
-            <TimelineDescription>{item.description}</TimelineDescription>
-          </TimelineItem>
-        ))}
-      </Timeline>
-    );
-  };
+      {
+        title: content.title,
+        content: (
+          <motion.div
+
+            key={idx}
+            ref={ref}
+          >
+            <motion.p
+              {...animationOption}
+              className="text-neutral-800 dark:text-neutral-200 text-3xl font-mono mb-8">
+              {content.p}
+            </motion.p>
+
+            <div className="flex flex-wrap">
+              {content.imgSrc.map((src, imgIdx) => {
+                return (
+                  <motion.img
+                    className="my-3 hover:scale-150 aspect-auto"
+                    key={imgIdx}
+                    src={src}
+                    alt={src}
+                    {...
+                    // 1. adding hover effect
+                    // 2. delay in rendering the images
+                    {
+                      ...animationOption,
+                      whileHover: {
+
+                        scale: 1.05, transition: { delay: .001, type: 'linear' }
+                      },
+                      transition:
+                      {
+                        ...animationOption.transition,
+                        delay: 0.4 * (imgIdx + 1)
+                      }
+                    }}
+                  />
+                )
+              })}
+            </div>
+          </motion.div >
+        ),
+      }
+    )
+  })
+
+  return (
+    <div className="w-full">
+      <AnimatePresence>
+        <Timeline data={data} />
+      </AnimatePresence>
+    </div>
+  );
+}

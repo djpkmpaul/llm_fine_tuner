@@ -23,6 +23,11 @@ export async function POST(request: NextRequest) {
         if (!foundUser) {
             return NextResponse.json({ error: "User not found", success: false }, { status: 404 });
         }
+        console.log(foundUser.isVerified);
+        console.log("foundUser.isVerified");
+        if(foundUser.isVerified){
+            return NextResponse.json({ message: "User is already verified", success: true }, { status: 200 });
+        }
         const signedToken = await jwt.sign({id: foundUser._id}, process.env.USER_SESSION_SECRET!);
 
         const url = `${process.env.DOMAIN}/verify?q=${signedToken}`
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
             foundUser.verifyTokenExpiry = Date.now() + 3600 * 1000; // 1 hr from sending email
             const savedUser = await foundUser.save();
             console.log("Email send saved user: ", savedUser);
-            return NextResponse.json({ message: 'Verification email sent', success: true }, { status: 200 });
+            return NextResponse.json({ message: `Verification email sent\nPlease visit the link sent to your email ${email}`, success: true }, { status: 200 });
         } catch (error) {
             console.error("Error sending email:", error);
             return NextResponse.json({ error: 'Failed to send verification email', success: false }, { status: 500 });
