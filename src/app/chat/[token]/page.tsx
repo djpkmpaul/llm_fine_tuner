@@ -1,7 +1,6 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from "framer-motion"
-import Header from '@/app/components/header'
 import { ChatBubbleIllustration, Robot2Illustration, LoadingSpinner } from '@/app/components/Illustrations'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -76,7 +75,6 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
 
   return (
     <div id="random" className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <Header />
       <main className="flex-grow flex flex-col items-center justify-center p-4">
         <AnimatePresence mode="wait">
           {loading ? (

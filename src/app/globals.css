@@ -5,15 +5,19 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
 html {
   scroll-behavior: smooth;
 }
 
 /* Example transition effect for the charts section */
 #charts {
-  opacity: 1; /* Initial state: hidden */
-  transform: translateY(50px); /* Initial position: slightly down */
-  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Smooth transition for opacity and position */
+  opacity: 1;
+  /* Initial state: hidden */
+  transform: translateY(50px);
+  /* Initial position: slightly down */
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  /* Smooth transition for opacity and position */
 }
 
 
@@ -45,6 +49,7 @@ html {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -77,7 +82,59 @@ html {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.accuracy {
+  position: relative;
+  cursor: pointer;
+}
+
+.accuracy:hover {
+  background-color: rgb(212, 134, 212);
+  transition: all 0.1s ease-in-out;
+  border-radius: 10 0 20 0;
+  padding: 2px;
+}
+
+.accuracy:hover::after {
+  content: "";
+  position: absolute;
+  display: block;
+  top: 60;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 62;
+  width: calc(62*(480/192));
+  background-size: cover;
+  aspect-ratio: 20/9;
+  background-image: url('/100.gif');
+  background-repeat: no-repeat;
+  animation: colorChange 4.96s ease-in-out 40ms infinite forwards;
+  z-index: 10;
+}
+
+@keyframes colorChange {
+  0% {
+    background-color: #fff;
+  }
+
+  25% {
+    background-color: rgb(216, 191, 216);
+  }
+
+  50% {
+    background-color: rgb(216, 134, 216);
+  }
+
+  75% {
+    background-color: rgb(216, 104, 216);
+  }
+
+  100% {
+    background-color: rgb(218, 93, 218);
   }
 }

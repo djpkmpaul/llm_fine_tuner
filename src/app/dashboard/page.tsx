@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import Header from "@/app/components/header";
 import { Button } from "@/components/ui/button";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from "ag-grid-community";
@@ -12,13 +11,14 @@ import { DashboardIllustration, RobotIllustration, ChattingIllustration } from "
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMySession } from '@/app/helper/MySessionContext'
 import axios from "axios";
+import { error } from "console";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function DashBoard() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
-    const { userSessionDetails, setUserSessionDetails } = useMySession();
+    const { userSessionDetails, setUserSessionDetails, sessionLoaded, setSessionLoaded } = useMySession();
     const [fetchedData, setFetchedData] = useState(false)
     const agGridTheme = themeQuartz.withParams({
         fontSize: "16px",
@@ -46,7 +46,14 @@ export default function DashBoard() {
 
     const DeleteBtn = (params: any) => {
         function handleDeleteClick() {
-            toast.success("Deleting LLM");
+            toast.success(`deleting ${params.data.chat}`)
+            axios.post("/api/llms/deletellm", {
+                tokenId: params.data.chat
+            }).then((response) => {
+                toast.success(`Response - ${response.data.message}`);
+            }).catch((error: any) => {
+                toast.error(error.response.data.error);
+            })
         }
         return (
             <Button onClick={handleDeleteClick} variant="destructive">
@@ -65,10 +72,10 @@ export default function DashBoard() {
                 console.error(err);
             });
         };
-        const content = "API Endpoint - " + params.data.apiEndPoint.substring(0,2) + "..."
+        const content = "API Endpoint - " + params.data.apiEndPoint.substring(0, 15) + "..."
         return (
-            <Button onClick={handleClick} variant="outline">
-                {content}
+            <Button onClick={handleClick} className="w-[100%] rounded-none text-start" variant="link">
+                <a href={`${params.data.apiEndPoint}`} target="_blank" rel="noopener noreferrer">{content}</a>
             </Button>
         );
     };
@@ -130,45 +137,49 @@ export default function DashBoard() {
     useEffect(() => {
         // Simulate loading delay
         // -> make the loading false after mouting.
-        const timer = setTimeout(() => {
+        /* const timer = setTimeout(() => {
             setIsLoading(false);
-        }, 1500);
+            }, 1500);
+            
+            return () => clearTimeout(timer); */
+        if (sessionLoaded) {
+            setIsLoading(false);
+        }
 
-        return () => clearTimeout(timer);
-    }, []);
+    }, [sessionLoaded]);
     useEffect(() => {
         try {
             let username;
-            // Get USERNAME - useMySession not working 
-            axios.get('/api/users/getUserDetails').then(res => {
-                console.log(res.data.decodedToken.username, " is the username");
-                username = res.data.decodedToken.username
-                // Post the data to get ALL LLMS
-                axios.post('/api/llms/getAllLLMs', { username }).then(postRes => {
-                    const llmData = postRes.data.foundUser.llms
-                    console.log(llmData);
-                    const llmRowData = llmData.map((item: any, key: any) => {
-                        const api = `https://api.example.com/llm/${item.name.split(" ").join("_").toString()}`
-                        return { llmName: item.name, apiEndPoint: api, chat: item.tokenId, deleteBtn: "Delete LLM" }
+            username = userSessionDetails.username;
+            sessionLoaded ? console.log("making a post request directly.. ") : console.log("Waiting for Session to Load")
+            if (sessionLoaded)
+                axios
+                    .post('/api/llms/getAllLLMs', { username }).then(postRes => {
+                        const llmData = postRes.data.foundUser.llms
+                        console.log(llmData);
+                        const llmRowData = llmData.map((item: any, key: any) => {
+                            const api = `https://api.example.com/llm/${item.name.split(" ").join("_").toString()}`
+                            return { llmName: item.name, apiEndPoint: api, chat: item.tokenId, deleteBtn: "Delete LLM" }
+                        })
+                        console.log("llmRowData");
+                        console.log(llmRowData);
+                        setRowData(llmRowData)
+                        setFetchedData(true)
+                    }).catch(err => {
+                        console.log(err);
                     })
-                    console.log("llmRowData");
-                    console.log(llmRowData);
-                    setRowData(llmRowData)
-                    setFetchedData(true)
-                }).catch(err => {
-                    console.log(err);
-                })
-            }).catch(err => {
-                console.log(err);
-            })
-
         } catch (error: any) {
             console.log(error.response.data);
         }
-    }, [fetchedData])
+    }, [sessionLoaded])
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white">
-            <Header />
+        <motion.div
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            exit={{opacity: 1}}
+            transition={{delay: 0.5, type: "spring", bounce: 0.52}}
+            className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white"
+        >
             <HeroHighlight>
                 <AnimatePresence>
                     {isLoading ? (
@@ -247,7 +258,7 @@ export default function DashBoard() {
                                         initial={{ opacity: 0, scale: 0 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: 0.5 }}
-                                        className="h-[60vh] w-full"
+                                        className="h-[30vh] w-full overflow-auto"
                                     >
                                         <AgGridReact
                                             rowData={rowData}
@@ -266,7 +277,7 @@ export default function DashBoard() {
                     )}
                 </AnimatePresence>
             </HeroHighlight>
-        </div>
+        </motion.div>
     );
 }
 

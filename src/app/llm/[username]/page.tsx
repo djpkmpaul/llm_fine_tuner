@@ -7,7 +7,6 @@ export default async function ProfilePage({ params }: { params: { username: stri
 
   return (
     <>
-    <Header/>
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
       <Card className="w-full max-w-md shadow-lg rounded-lg bg-white">
         <CardHeader>

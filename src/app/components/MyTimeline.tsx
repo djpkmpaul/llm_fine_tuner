@@ -10,15 +10,10 @@ export function MyTimeline() {
     amount: 1
   })
 
-  useEffect(() => {
-    console.log(ref);
-    console.log("Div element is in view");
-  }, [isInView])
-
   const animationOption = {
     initial: { opacity: 0, x: -200, scale: 0.8 },
     whileInView: { opacity: 1, x: 0, scale: 1 },
-    transition: { delay: 1., type: 'spring', bounce: 0.5 }
+    transition: { delay: .3, type: 'spring', bounce: 0.5 }
   }
   const contentData = [
     {
@@ -82,7 +77,7 @@ export function MyTimeline() {
               {content.imgSrc.map((src, imgIdx) => {
                 return (
                   <motion.img
-                    className="my-3 hover:scale-150 aspect-auto"
+                    className="my-3 aspect-auto bg-cover"
                     key={imgIdx}
                     src={src}
                     alt={src}
@@ -98,7 +93,7 @@ export function MyTimeline() {
                       transition:
                       {
                         ...animationOption.transition,
-                        delay: 0.4 * (imgIdx + 1)
+                        delay: 0.4 +  0.3*(imgIdx)
                       }
                     }}
                   />

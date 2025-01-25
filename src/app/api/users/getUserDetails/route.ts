@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({error: "Empty token", success: false}, {status: 404});
         }
         const decodedToken = jwt.verify(encodedToken, process.env.USER_SESSION_SECRET!)
-        console.log(decodedToken);
+        // console.log(decodedToken);
         return NextResponse.json({decodedToken, success: 200} )   
     } catch (error: any) {
         NextResponse.json({error: `${error.message}\nError Occurred`}, {status: 500});

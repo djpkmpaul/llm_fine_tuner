@@ -81,13 +81,13 @@ const ReviewCard = ({
 
 export default function MyMarquee() {
   return (
-    <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-clip rounded-lg border bg-background md:shadow-xl">
-      <Marquee className="[--duration:20s]">
+    <div className="relative flex h-[500px] w-[99vw] flex-col items-center justify-center overflow-clip rounded-lg border bg-background md:shadow-xl">
+      <Marquee className="[--duration:7s] hover:[--duration:30s]">
         {firstRow.map((review) => (
           <ReviewCard key={review.username} {...review} />
         ))}
       </Marquee>
-      <Marquee reverse className="[--duration:20s]">
+      <Marquee reverse className="[--duration:7s] hover:[--duration:30s]">
         {secondRow.map((review) => (
           <ReviewCard key={review.username} {...review} />
         ))}

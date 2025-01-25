@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import Header from '../components/header'
+import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,9 +17,10 @@ export default function Login() {
     username: '',
     password: ''
   })
+  const [clicked, setClicked] = useState<Boolean>(false)
   const router = useRouter()
 
-  const { userSessionDetails, setUserSessionDetails } = useMySession();
+  const { userSessionDetails, setUserSessionDetails, sessionLoaded, setSessionLoaded } = useMySession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ export default function Login() {
       toast.success(response.data.message);
       router.push("/") // -> LLM table
     } catch (error: any) {
-      toast.error(`ERROR: ${error.response.data.error}`);
+      toast.error(`ERROR: ${error.response}`);
       setUser({ ...user, username: '', password: '' });
 
       if (error.response.data.error === "User not found!") {
@@ -45,29 +45,34 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      <Header />
+    <motion.div
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0 }}
+      transition={{ delay: .5, type: "spring", bounce: 0.52 }}
+      className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white"
+    >
       <HeroHighlight>
         <main className="flex-grow flex items-center justify-center px-4 py-12">
           <motion.div
             className="w-full max-w-md"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 1.0 }}
           >
-            <div className="bg-white rounded-lg shadow-xl p-8 space-y-8">
+            <div className="bg-white rounded-lg shadow-2xl p-8 space-y-8">
               <div className="flex justify-center space-x-4">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
+                  transition={{ delay: 0.9, type: "spring", stiffness: 260, damping: 20 }}
                 >
                   <LockIllustration />
                 </motion.div>
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: 0.4, type: "spring", stiffness: 260, damping: 20 }}
+                  transition={{ delay: 1.1, type: "spring", stiffness: 260, damping: 20 }}
                 >
                   <KeyIllustration />
                 </motion.div>
@@ -77,15 +82,21 @@ export default function Login() {
                   className="text-center text-3xl font-mono font-extrabold text-gray-900"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
+                  transition={{ delay: 1.1 }}
                 >
                   Log in to your account
                 </motion.h2>
               </div>
-              <form className="space-y-6" onSubmit={handleSubmit}>
+              <motion.form
+                initial={{ y: 500 }}
+                animate={{ y: 0 }}
+                exit={{ y: -500 }}
+                transition={{ delay: 1.1, type: "spring", bounce: 0.52 }}
+                className="space-y-6" onSubmit={handleSubmit}
+              >
                 <div className="rounded-md space-y-4">
                   <div>
-                    <Label htmlFor="username" className="text-lg font-medium text-gray-700">Username</Label>
+                    <Label htmlFor="username" className="text-lg font-mono font-extrabold text-gray-700">Username</Label>
                     <Input
                       id="username"
                       name="username"
@@ -98,7 +109,7 @@ export default function Login() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password" className="text-lg font-medium text-gray-700">Password</Label>
+                    <Label htmlFor="password" className="text-lg font-mono font-extrabold text-gray-700">Password</Label>
                     <Input
                       id="password"
                       name="password"
@@ -113,20 +124,30 @@ export default function Login() {
                 </div>
 
                 <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1, transition: { delay: 1.5, type: "spring", bounce: 0.52 } }}
+                  exit={{ scaleX: 1 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={{ delay: .1, type: "spring", bounce: 0.1 }}
                 >
-                  <Button type="submit" className="w-full text-lg py-6">
-                    Log In
-                  </Button>
+                  {clicked ?
+                    <Button type="button" className="w-full text-lg py-6">
+                      Please wait..
+                    </Button>
+                    :
+                    <Button type="submit" className="w-full text-lg py-6">
+                      Log In
+                    </Button>
+                  }
                 </motion.div>
-              </form>
+              </motion.form>
             </div>
           </motion.div>
         </main>
       </HeroHighlight>
       <Toaster />
-    </div>
+    </motion.div>
   )
 }
 

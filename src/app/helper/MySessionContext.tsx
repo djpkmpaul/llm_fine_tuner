@@ -12,8 +12,10 @@ export const MySessionProvider = ({ children }: { children: ReactNode }) => {
     email: ''
   });
 
+  const [sessionLoaded, setSessionLoaded] = useState<Boolean>(false);
+
   return (
-    <MySessionContext.Provider value={{ userSessionDetails, setUserSessionDetails }}>
+    <MySessionContext.Provider value={{ userSessionDetails, setUserSessionDetails, sessionLoaded, setSessionLoaded }}>
       {children}
     </MySessionContext.Provider>
   );

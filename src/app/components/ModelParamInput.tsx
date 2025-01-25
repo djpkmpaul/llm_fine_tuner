@@ -31,19 +31,20 @@ export const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange
 
 interface SelectInputProps {
   label: string;
-  value: string | number | Int32;
+  value: string | number ;
   onChange: (value: string ) => void;
   options: string[];
+  className?: string
 }
 
-export const SelectInput: React.FC<SelectInputProps> = ({ label, value, onChange, options }) => (
-  <div className="m-2 p-2 space-y-2">
+export const SelectInput: React.FC<SelectInputProps> = ({ className, label, value, onChange, options }) => (
+  <div className={`m-2 p-2 space-y-2 ${className}`}>
     <Label className="text-base font-medium text-gray-700">{label}</Label>
     <Select value={value.toString()} onValueChange={onChange}>
       <SelectTrigger className="w-full">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent >
         {options.map((option) => (
           <SelectItem key={option} value={option}>
             {option}

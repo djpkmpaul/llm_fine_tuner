@@ -61,7 +61,7 @@ const chartConfig = {
 
 export default function SpiderChart() {
   return (
-    <Card className="font-mono ml-3 bg-secondary text-secondary-foreground dark:bg-white">
+    <Card className="font-mono ml-3 text-secondary-foreground dark:bg-white">
       <CardHeader className="text-xl items-center pb-4">
         <CardTitle className="">Radar Chart - General vs Fine-Tuned LLM</CardTitle>
         <CardDescription>
