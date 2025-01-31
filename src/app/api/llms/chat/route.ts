@@ -25,12 +25,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const data = request.json();
+        console.log("Chat page - POST request Recieved");
+        const data = await request.json();
+        const llmName = data.myToken;
+        const inputMessage = data.inputMessage;
         console.log(data);
-        return NextResponse.json({ message: "Your Response : asdasdasdas", success: true }, { status: 200 });
-    } catch (error) {
+        const response = await ollama.chat({
+            model: `LegacyPaul0809/${llmName}`,
+            messages: [{ role: 'user', content:inputMessage }],
+        })
+        console.log(response.message.content)
+        console.log(response)
+        return NextResponse.json({ message: response.message.content, success: true }, { status: 200 });
+    } catch (error:any) {
         console.log(error);
-        
-        return NextResponse.json({ message: "Error Occurred", success: true }, { status: 200 });
+
+        return NextResponse.json({error:error.message, success: true }, { status: 500});
     }
 }

@@ -22,6 +22,7 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [ollamaRunning, setOllamaRunning] = useState(false);
   const [modelPulled, setModelPulled] = useState(true);
+  const [canChat, setCanChat] = useState(true)
 
   useEffect(() => {
     // when the page is first loaded 
@@ -95,20 +96,25 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === '') return
+    setCanChat(false)
     console.log(inputMessage);
     try {
       console.log(`Sending post request to LegacyPaul0809/${myToken}`);
-      const response = await axios.post('/api/llms/chat', { inputMessage });
-      console.log(response);
-      
       setMessages(prev => [...prev, { type: 'user', content: inputMessage }])
       setInputMessage('')
+
+      const response = await axios.post('/api/llms/chat', { inputMessage, myToken });
+      console.log("OLLAMA RESPONSE - ", response);
+      console.log(response.data);
+      
+      const answer = response.data.message
+      console.log(answer);
       
       // Simulate bot response
-      setTimeout(() => {
-        setMessages(prev => [...prev, { type: 'bot', content: `You said: "${inputMessage}". How can I help you with that?` }])
-      }, 100)
+      setMessages(prev => [...prev, { type: 'bot', content: answer }])
+      setCanChat(true)
     } catch (error: any) {
+      console.log(error);
       console.log(error.response.data.error);
       toast.error(error.response.data.error);
       const myError = error.response.data.error;
@@ -179,23 +185,39 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
                 </AnimatePresence>
               </div>
               {
-                modelPulled == false ?
-                  <div className="flex justify-center">
-                    <LoadingSpinner />
-                    <Button type='button' variant="ghost" className='ml-3 text-xl font-mono w-[80%]'>please wait till we download the your model</Button>
-                  </div>
+                modelPulled === false ?
+                  (
+
+                    <div className="flex justify-center">
+                      <LoadingSpinner />
+                      <Button type='button' variant="ghost" className='ml-3 text-xl font-mono w-[80%]'>please wait till we download the your model</Button>
+                    </div>
+                  )
                   :
-                  <div className="flex space-x-2">
-                    <Input
-                      type="text"
-                      placeholder="Type your message..."
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      className="flex-grow"
-                    />
-                    <Button onClick={handleSendMessage}>Send</Button>
-                  </div>
+                  (
+
+                    <div className="flex space-x-2">
+                      <Input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && canChat && handleSendMessage()}
+                        className="flex-grow"
+                      />
+                      <>
+                        {canChat ?
+                          <Button onClick={handleSendMessage}>Send</Button>
+                          :
+                          <div className='flex justify-center'>
+                            
+                              <LoadingSpinner />
+                            
+                          </div>
+                        }
+                      </>
+                    </div>
+                  )
               }
             </motion.div>
           )}
@@ -205,3 +227,4 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
   )
 }
 
+ // "Can you help me find related materials of Bohr Radius?
