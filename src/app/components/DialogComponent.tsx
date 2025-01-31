@@ -42,7 +42,7 @@ export default function MyDialogComponent(props: DialogProp) {
 
                     {props.body.map((content: bodyType, idx: number)=>{
                         return(
-                            <div className="flex justify-between flex-wrap flex-1 mb-2 border-2">
+                            <div key={idx} className="flex justify-between flex-wrap flex-1 mb-2 border-2">
                                 <DialogTitle className="p-2">
                                     {content.name}
                                 </DialogTitle>

@@ -9,9 +9,12 @@ import { HeroHighlight } from "@/components/ui/hero-highlight";
 import { motion, AnimatePresence } from "framer-motion";
 import { DashboardIllustration, RobotIllustration, ChattingIllustration } from "@/app/components/Illustrations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { useMySession } from '@/app/helper/MySessionContext'
 import axios from "axios";
 import { error } from "console";
+import MySheetComponent from "../components/MySheetComponent";
+import Sidebar from "@/app/components/SidebarComponent";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -19,6 +22,19 @@ export default function DashBoard() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const { userSessionDetails, setUserSessionDetails, sessionLoaded, setSessionLoaded } = useMySession();
+
+    const [userLlmData, setUserLlmData] = useState([
+        {
+            _id: '6793d8ceb5a377f621fada1d',
+            name: 'legal document fine tuner123',
+            baseModel: 'unsloth/Meta-Llama-3.1-8B-bnb-4bit',
+            tokenId: '0496950f-cc47-489c-a5a6-f150a95171c9',
+            chats: [],
+            __v: 0
+        }
+    ]); // it is used for opening the sheet details about LLM 
+    const [rowIndex, setRowIndex] = useState(0); // tracks which row was clicked
+
     const [fetchedData, setFetchedData] = useState(false)
     const agGridTheme = themeQuartz.withParams({
         fontSize: "16px",
@@ -39,11 +55,51 @@ export default function DashBoard() {
         headerFontSize: "18px",
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log("Handling Click..");
-    };
+    const llmNameBtn = (params: any) => {
+        const toTitleCase = (str: string) => {
+            return str.replace(
+                /\w\S*/g,
+                (text: string) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+            );
+        }
+        return (
+            <MySheetComponent
+                title="LLM Details"
+                description="Lorem ipsum dolor sit amet consectetur adipisicing elit. Officia modi nulla dolor saepe, 
+                doloremque ratione possimus nisi voluptate blanditiis at atque aperiam nobis tempore deleniti fuga sit porro tempora! Nostrum?"
+                trigger={
+                    <Button variant="ghost">
+                        {params.data.llmName}
+                    </Button>
+                }
+                content={
 
+                    rowIndex >= 0 ?
+                        <Card className="p-2 shadow-xl mb-5">
+                            <div className="">
+                                <h1 className="text-xl font-mono">
+                                    TITLE: <span>{toTitleCase(userLlmData[rowIndex].name)}</span>
+                                </h1>
+                                <h2 className="text-lg font-mono">
+                                    Base Model: <code>{userLlmData[rowIndex].baseModel}</code>
+                                </h2>
+                                <h3 className="text-md font-mono">
+                                    Token Id: <code>{userLlmData[rowIndex].tokenId}</code>
+                                </h3>
+                            </div>
+                        </Card>
+                        :
+                        <h1 className="text-xl">
+                            NONE
+                        </h1>
+
+
+                }
+            />
+
+
+        );
+    };
     const DeleteBtn = (params: any) => {
         function handleDeleteClick() {
             toast.success(`deleting ${params.data.chat}`)
@@ -56,7 +112,7 @@ export default function DashBoard() {
             })
         }
         return (
-            <Button onClick={handleDeleteClick} variant="destructive">
+            <Button className="w-[100%]" onClick={handleDeleteClick} variant="destructive">
                 Delete LLM
             </Button>
         );
@@ -64,6 +120,7 @@ export default function DashBoard() {
 
     const APIEndPointBtn = (params: any) => {
         const handleClick = () => {
+            console.log("clicked on API");
             const apiEndPoint = params.data.apiEndPoint;
             navigator.clipboard.writeText(apiEndPoint).then(() => {
                 toast.success("API endpoint copied to clipboard!");
@@ -74,9 +131,32 @@ export default function DashBoard() {
         };
         const content = "API Endpoint - " + params.data.apiEndPoint.substring(0, 15) + "..."
         return (
-            <Button onClick={handleClick} className="w-[100%] rounded-none text-start" variant="link">
-                <a href={`${params.data.apiEndPoint}`} target="_blank" rel="noopener noreferrer">{content}</a>
-            </Button>
+            <Sheet>
+                <SheetTrigger>
+                    <Button onClick={handleClick} className="w-[100%] rounded-none text-start" variant="default">
+                        {/* <a href={`${params.data.apiEndPoint}`} target="_blank" rel="noopener noreferrer">{content}</a> */}
+                        {content}
+                    </Button>
+                </SheetTrigger>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle> This is your header</SheetTitle>
+                        <SheetDescription>
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Distinctio, facere non. Modi fugiat aliquam velit neque reprehenderit,
+                            excepturi fuga tempora, aliquid ipsa repellat deserunt mollitia consectetur aperiam doloremque ullam! Laborum!
+                        </SheetDescription>
+                    </SheetHeader>
+                    <h1 className="text-xl text-slate-50">
+                        Hey there
+                    </h1>
+                    <SheetFooter>
+                        <SheetClose asChild>
+                            <Button>Close</Button>
+                        </SheetClose>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
+
         );
     };
 
@@ -86,7 +166,7 @@ export default function DashBoard() {
             router.push(`/chat/${params.value}`);
         }
         return (
-            <Button onClick={handleChatClick} variant="secondary">
+            <Button className="w-[100%]" onClick={handleChatClick} variant="secondary">
                 Chat Page
             </Button>
         )
@@ -128,12 +208,19 @@ export default function DashBoard() {
     ]);
 
     const [colDefs, setColDefs] = useState<ColDef[]>([
-        { field: "llmName", flex: 1, headerName: "LLM Name" },
-        { field: "apiEndPoint", flex: 1, cellRenderer: APIEndPointBtn, headerName: "API Endpoint" },
+        { field: "llmName", flex: 1, cellRenderer: llmNameBtn, headerName: "LLM Name", maxWidth: 200 },
+        { field: "apiEndPoint", flex: 1, cellRenderer: APIEndPointBtn, headerName: "API Endpoint", maxWidth: 250 },
         { field: "chat", flex: 1, cellRenderer: chatPageBtn, headerName: "Chat" },
         { field: "delete LLM", flex: 1, cellRenderer: DeleteBtn, headerName: "Actions" },
     ]);
+    function onCellClicked(e: any) {
+        console.log(e);
+        console.log("Clicked - ", e.rowIndex);
+        console.log(userLlmData);
 
+
+        setRowIndex(e.rowIndex);
+    }
     useEffect(() => {
         // Simulate loading delay
         // -> make the loading false after mouting.
@@ -156,7 +243,9 @@ export default function DashBoard() {
                 axios
                     .post('/api/llms/getAllLLMs', { username }).then(postRes => {
                         const llmData = postRes.data.foundUser.llms
-                        console.log(llmData);
+                        console.log("llmData", llmData);
+                        setUserLlmData(llmData);
+                        console.log("foundUser", postRes.data.foundUser);
                         const llmRowData = llmData.map((item: any, key: any) => {
                             const api = `https://api.example.com/llm/${item.name.split(" ").join("_").toString()}`
                             return { llmName: item.name, apiEndPoint: api, chat: item.tokenId, deleteBtn: "Delete LLM" }
@@ -173,111 +262,117 @@ export default function DashBoard() {
         }
     }, [sessionLoaded])
     return (
-        <motion.div
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            exit={{opacity: 1}}
-            transition={{delay: 0.5, type: "spring", bounce: 0.52}}
-            className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white"
-        >
-            <HeroHighlight>
-                <AnimatePresence>
-                    {isLoading ? (
-                        <motion.div
-                            key="loading"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center h-screen"
-                        >
-                            <RobotIllustration />
-                            <motion.h2
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="text-2xl font-bold mt-4"
+        <div className="flex justify-center">
+            <Sidebar />
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 1 }}
+                transition={{ delay: 0.5, type: "spring", bounce: 0.52 }}
+                className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white"
+            >
+                <HeroHighlight>
+                    <AnimatePresence>
+                        {isLoading ? (
+                            <motion.div
+                                key="loading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col items-center justify-center h-screen"
                             >
-                                Loading your LLMs...
-                            </motion.h2>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="content"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="flex flex-col items-center justify-start p-8 w-[70vw] max-w-7xl mx-auto"
-                        >
-                            <Toaster />
-                            <div className="w-full flex justify-between items-center mb-8">
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
-                                >
-                                    <DashboardIllustration />
-                                </motion.div>
-                                <div>
-                                    <motion.h1
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: 0.2 }}
-                                        className="text-4xl font-bold text-gray-900 mb-2"
-                                    >
-                                        Your Dashboard
-                                    </motion.h1>
-                                    <motion.p
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: 0.2 }}
-                                        className="text-xl text-gray-600"
-                                    >
-                                        Manage your custom LLMs
-                                    </motion.p>
-                                </div>
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 1, scale: 1 }}
+                                <RobotIllustration />
+                                <motion.h2
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.2 }}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                    className="text-2xl font-bold mt-4"
                                 >
-                                    <Button onClick={() => router.push('/createllm')} size="lg">
-                                        Create New LLM
-                                    </Button>
-                                </motion.div>
-                            </div>
+                                    Loading your LLMs...
+                                </motion.h2>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="content"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="flex flex-col items-start justify-start p-8 w-[70vw] max-w-7xl mx-auto"
+                            >
 
-                            <Card className="w-full">
-                                <CardHeader>
-                                    <CardTitle>Your LLMs</CardTitle>
-                                    <CardDescription>Here's a list of all your custom Language Models</CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                                <Toaster />
+                                <div className="w-full flex justify-between items-center mb-8">
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
+                                    >
+                                        <DashboardIllustration />
+                                    </motion.div>
+                                    <div>
+                                        <motion.h1
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="text-4xl font-bold text-gray-900 mb-2"
+                                        >
+                                            Your Dashboard
+                                        </motion.h1>
+                                        <motion.p
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="text-xl text-gray-600"
+                                        >
+                                            Manage your custom LLMs
+                                        </motion.p>
+                                    </div>
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: 0.5 }}
-                                        className="h-[30vh] w-full overflow-auto"
+                                        transition={{ delay: 0.2 }}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                     >
-                                        <AgGridReact
-                                            rowData={rowData}
-                                            columnDefs={colDefs}
-                                            theme={agGridTheme}
-                                            animateRows={true}
-                                            enableCellTextSelection={true}
-                                            suppressMovableColumns={true}
-                                            suppressColumnVirtualisation={true}
-                                            domLayout="autoHeight"
-                                        />
+                                        <Button onClick={() => router.push('/createllm')} size="lg">
+                                            Create New LLM
+                                        </Button>
                                     </motion.div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </HeroHighlight>
-        </motion.div>
+                                </div>
+
+                                <Card className="w-[60vw]">
+                                    <CardHeader>
+                                        <CardTitle>Your LLMs</CardTitle>
+                                        <CardDescription>Here's a list of all your custom Language Models</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.5 }}
+                                            className="h-[30vh] w-full overflow-auto"
+                                        >
+                                            <AgGridReact
+                                                rowData={rowData}
+                                                columnDefs={colDefs}
+                                                theme={agGridTheme}
+                                                animateRows={true}
+                                                enableCellTextSelection={true}
+                                                suppressMovableColumns={true}
+                                                suppressColumnVirtualisation={true}
+                                                domLayout="autoHeight"
+                                                onCellClicked={onCellClicked}
+                                            />
+                                        </motion.div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </HeroHighlight>
+            </motion.div>
+        </div>
+
     );
 }
 

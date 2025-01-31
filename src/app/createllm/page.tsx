@@ -237,28 +237,34 @@ export default function CreateNewLLM() {
       return
     }
     toast.success(`Creating your Custom LLM!\n${llmName} : ${baseModel}`);
+    console.log("making post request to - " , process.env.AWS_PUBLIC_IP);
     try {
-      formData.append("llmName", llmName);
-      formData.append("baseModel", baseModel);
-      formData.append("modelParams", JSON.stringify(modelParams));
-      formData.append("trainingArguments", JSON.stringify(trainingArguments));
-      formData.append("userSessionDetails", JSON.stringify(userSessionDetails));
-      formData.append("inputColValue", inputColValue.toLocaleString());
-      formData.append("inputColType", inputColType.toLocaleString());
+      const awsResponse = await axios.post(`http://3.110.48.75/file-upload`, formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log(awsResponse);
+      toast.success(`File Uploaded Successfully. ${awsResponse}`)
+
       const createLLMData = {
-        formData: formData,
+        llmName: llmName,
+        baseModel: baseModel,
+        description: description,
         modelParams: modelParams,
         trainingArguments: trainingArguments,
-        userSessionDetails
-      }
-      const response = await axios.post('api/llms/createllm', formData, {
+        inputColValue: inputColValue.join(','),
+        inputColType: inputColType.join(','),
 
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      });
+      }
+      const response = await axios.post('api/llms/createllm', createLLMData, 
+        { timeout: 1800000 } // 30 minutes
+      );
       setCanSubmit(true);
       console.log(response);
+      console.log(response.data);
       toast.success(response.data.message)
     } catch (error: any) {
       setCanSubmit(true);
@@ -280,8 +286,6 @@ export default function CreateNewLLM() {
     "unsloth/mistral-7b-instruct-v0.3-bnb-4bit",
     "unsloth/Phi-3.5-mini-instruct",
     "unsloth/Phi-3-medium-4k-instruct",
-    "unsloth/gemma-2-9b-bnb-4bit",
-    "unsloth/gemma-2-27b-bnb-4bit",
   ]
   return (
     <motion.div
@@ -398,10 +402,10 @@ export default function CreateNewLLM() {
 
                     {Array.from({ length: numCols }).map((_, idx) => (
                       <motion.div
-                        initial={{ opacity: 0, x:-200 }}
-                        animate={{ opacity: 1, x:0 }}
-                        exit={{ opacity: 0, x:200 }}
-                        transition={{delay: 0.3, type:"spring", bounce: 0.5}}
+                        initial={{ opacity: 0, x: -200 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 200 }}
+                        transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
                         key={idx} className="flex border-[1px] my-2 mx-2"
                       >
                         <SelectInput
@@ -478,7 +482,7 @@ export default function CreateNewLLM() {
                   <Label htmlFor='description' className='text-lg font-medium text-gray-700'>Explain the Purpose</Label>
                   <Textarea
                     id='description'
-                    placeholder="Tell us a little bit about yourself"
+                    placeholder="Tell us a little bit about dataset."
                     className="resize-none"
                     value={description}
                     onChange={(e: any) => { setDescription(e.target.value) }}
