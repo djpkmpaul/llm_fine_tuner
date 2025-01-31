@@ -8,7 +8,10 @@ export async function POST(request: NextRequest) {
         console.log(`PULLING LegacyPaul0809/${modelName}`);
 
         const startTime = Date.now();
-        await ollama.pull({ model: `LegacyPaul0809/${modelName}` });
+        const response = ollama.pull({  model: `LegacyPaul0809/${modelName}`, stream: true    });
+        // for await (const progress of response) {
+        //     console.log("Pull progress:", progress);
+        // }
         const duration = (Date.now() - startTime) / 1000
         console.log("Time taken (in seconds) - ", duration);
 
