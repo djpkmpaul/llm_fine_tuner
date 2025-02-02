@@ -1,3 +1,4 @@
+"use client"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader,SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";

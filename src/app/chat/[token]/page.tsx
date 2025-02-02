@@ -1,10 +1,9 @@
-'use client'
+"use client"
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from "framer-motion"
 import { ChatBubbleIllustration, Robot2Illustration, LoadingSpinner } from '@/app/components/Illustrations'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { exec } from 'child_process'
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast'
 interface Message {
@@ -115,6 +114,7 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
       setCanChat(true)
     } catch (error: any) {
       console.log(error);
+      setCanChat(true)
       console.log(error.response.data.error);
       toast.error(error.response.data.error);
       const myError = error.response.data.error;

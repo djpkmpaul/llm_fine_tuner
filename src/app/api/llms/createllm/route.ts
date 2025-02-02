@@ -45,14 +45,12 @@ export async function POST(request: NextRequest) {
                 targetCol: completion
                 }
         */
-        // // Ensure inputColType and inputColValue are arrays
-        const inputCol= createLLMData.inputColType.split(',')[0];
-        const targetCol = createLLMData.inputColValue.split(',')[1];
-        createLLMData = {...createLLMData, inputCol: inputCol, targetCol: targetCol }
+        
         // Construct LLM data (no unnecessary JSON.stringify())
 
         console.log("Sending to AWS:", createLLMData);
-
+        console.log(`Sending POST REQUEST to - ${process.env.AWS_PUBLIC_IP}/aws` );
+        
         // AWS Public IP - Flask server
         const awsResponse = await axios.post(
             // 1. rm folders -> 
@@ -60,42 +58,13 @@ export async function POST(request: NextRequest) {
             // 3. save the mode 
             // 4. ollama create LegacyPaul0809/{name}
             // 5. ollama push LegacyPaul0809/{name}
-            `http://3.110.48.75/aws`, //aws = fine-tune
+            `${process.env.AWS_PUBLIC_IP}/aws`, //aws = fine-tune
             createLLMData,
             { timeout: 1800000 } // 30 minutes
         );
         
-        console.log("AWS Response:", awsResponse);
         console.log("AWS Response:", awsResponse.data);
-        
-
-        // If AWS fine-tuning is successful, proceed to create LLM entry in MongoDB
-        const newModel = new Llm({
-            name: createLLMData.llmName,
-            baseModel: createLLMData.baseModel,
-            modelParams: createLLMData.modelParams
-        });
-
-        const { username } = createLLMData.userSessionDetails;
-        const foundUser = await User.findOne({ username });
-
-        if (!foundUser) {
-            return NextResponse.json({ error: "User not found", success: false }, { status: 404 });
-        }
-
-        if (foundUser.llms.length >= 4) {
-            console.log("User already has 4 LLMs:", foundUser.llms);
-            return NextResponse.json({ error: "User cannot have more than 4 LLMs", success: false }, { status: 429 });
-        }
-
-        // Save the LLM to MongoDB
-        const savedModel = await newModel.save();
-        foundUser.llms.push(savedModel._id);
-        await foundUser.save();
-
-        console.log("Created new LLM:", savedModel);
-
-        return NextResponse.json({ message: "Created LLM Successfully", success: true, savedModel }, { status: 200 });
+        return NextResponse.json({ message: "Fine-Tuning Process has begun..", success: true }, { status: 200 });        
 
     } catch (error: any) {
         console.error("Error:", error.message);
