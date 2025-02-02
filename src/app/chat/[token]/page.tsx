@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { exec } from 'child_process'
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast'
+import Latex from 'react-latex'
+import ReactMarkdown from 'react-markdown'
 interface Message {
   type: 'user' | 'bot'
   content: string
@@ -106,15 +108,16 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
       const response = await axios.post('/api/llms/chat', { inputMessage, myToken });
       console.log("OLLAMA RESPONSE - ", response);
       console.log(response.data);
-      
+
       const answer = response.data.message
       console.log(answer);
-      
+
       // Simulate bot response
       setMessages(prev => [...prev, { type: 'bot', content: answer }])
       setCanChat(true)
     } catch (error: any) {
       console.log(error);
+      setCanChat(true)
       console.log(error.response.data.error);
       toast.error(error.response.data.error);
       const myError = error.response.data.error;
@@ -178,7 +181,11 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
                           : 'bg-gray-200 text-gray-800'
                           }`}
                       >
-                        {message.content}
+                      <Latex>
+                          {message.content}
+                      </Latex>
+                        
+                        
                       </div>
                     </motion.div>
                   ))}
@@ -210,9 +217,9 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
                           <Button onClick={handleSendMessage}>Send</Button>
                           :
                           <div className='flex justify-center'>
-                            
-                              <LoadingSpinner />
-                            
+
+                            <LoadingSpinner />
+
                           </div>
                         }
                       </>
@@ -227,4 +234,4 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
   )
 }
 
- // "Can you help me find related materials of Bohr Radius?
+// "Can you help me find related materials of Bohr Radius?
