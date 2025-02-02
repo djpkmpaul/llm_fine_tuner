@@ -1,14 +1,11 @@
-'use client'
+"use client"
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from "framer-motion"
 import { ChatBubbleIllustration, Robot2Illustration, LoadingSpinner } from '@/app/components/Illustrations'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { exec } from 'child_process'
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast'
-import Latex from 'react-latex'
-import ReactMarkdown from 'react-markdown'
 interface Message {
   type: 'user' | 'bot'
   content: string
@@ -108,10 +105,10 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
       const response = await axios.post('/api/llms/chat', { inputMessage, myToken });
       console.log("OLLAMA RESPONSE - ", response);
       console.log(response.data);
-
+      
       const answer = response.data.message
       console.log(answer);
-
+      
       // Simulate bot response
       setMessages(prev => [...prev, { type: 'bot', content: answer }])
       setCanChat(true)
@@ -181,11 +178,7 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
                           : 'bg-gray-200 text-gray-800'
                           }`}
                       >
-                      <Latex>
-                          {message.content}
-                      </Latex>
-                        
-                        
+                        {message.content}
                       </div>
                     </motion.div>
                   ))}
@@ -217,9 +210,9 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
                           <Button onClick={handleSendMessage}>Send</Button>
                           :
                           <div className='flex justify-center'>
-
-                            <LoadingSpinner />
-
+                            
+                              <LoadingSpinner />
+                            
                           </div>
                         }
                       </>
@@ -234,4 +227,4 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
   )
 }
 
-// "Can you help me find related materials of Bohr Radius?
+ // "Can you help me find related materials of Bohr Radius?

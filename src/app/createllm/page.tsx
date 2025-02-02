@@ -1,5 +1,5 @@
 "use client"
-import React, { useRef, useEffect, useState, ChangeEvent } from 'react'
+import React, { useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,6 @@ import { NumberInput, SelectInput, MultiSelectInput, BooleanInput } from '@/app/
 import axios from 'axios'
 import { useMySession } from '@/app/helper/MySessionContext'
 import MyDialogComponent from '../components/DialogComponent'
-import { X } from 'lucide-react'
 
 type body = {
   name: string,
@@ -52,6 +51,7 @@ type TrainingArg = {
 export default function CreateNewLLM() {
   const router = useRouter();
   const [llmName, setLlmName] = useState("");
+  const [llmNameError, setLlmNameError] = useState("")
   const [baseModel, setBaseModel] = useState("");
   const [formData, setFormData] = useState<FormData>(new FormData());
   const [showDevOptions, setShowDevOptions] = useState(false)
@@ -59,13 +59,18 @@ export default function CreateNewLLM() {
 
   const [description, setDescription] = useState<string>("");
 
-  const [inputColType, setInputColType] = useState<string[]>(["Input Column"]); // input column, target
-  const [inputColValue, setInputColValue] = useState<string[]>([]); // input column, target
+  const [inputColValue, setInputColValue] = useState<string>(""); // input column, target
+  const [targetColValue, setTargetColValue] = useState<string>(""); // input column, target
 
-  const [numCols, setNumCols] = useState(1);
   // user cant click submit multiple times. user must wait until the LLM server responds 
   const [canSubmit, setCanSubmit] = useState<Boolean>(true);
 
+  // AWS Polling Variables
+  const [status, setStatus] = useState(false);
+  const [timeoutTime, setTimeoutTime] = useState<number>(1 * 60000); // 3 mins
+  const [timelapsed, setTimelapsed] = useState<number>(0);
+
+  const [createLLMData, setCreateLLMData] = useState<Object>();
   const [modelParams, setModelParams] = useState<ModelParams>({
     r: 16,
     target_modules: ['q_proj'],
@@ -236,10 +241,14 @@ export default function CreateNewLLM() {
       toast.error("Please fill in all fields");
       return
     }
+    if (llmNameError) {
+      toast.error(llmNameError);
+      return;
+    }
     toast.success(`Creating your Custom LLM!\n${llmName} : ${baseModel}`);
-    console.log("making post request to - " , process.env.AWS_PUBLIC_IP);
+    console.log("making post request to - ", process.env.AWS_PUBLIC_IP);
     try {
-      const awsResponse = await axios.post(`http://3.110.48.75/file-upload`, formData,
+      const awsResponse = await axios.post(`${process.env.AWS_PUBLIC_IP}/file-upload`, formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -249,33 +258,92 @@ export default function CreateNewLLM() {
       console.log(awsResponse);
       toast.success(`File Uploaded Successfully. ${awsResponse}`)
 
-      const createLLMData = {
+      const myData = {
         llmName: llmName,
         baseModel: baseModel,
         description: description,
         modelParams: modelParams,
         trainingArguments: trainingArguments,
-        inputColValue: inputColValue.join(','),
-        inputColType: inputColType.join(','),
-
+        inputColValue: inputColValue,
+        targetColValue: targetColValue,
+        userSessionDetails: userSessionDetails
       }
-      const response = await axios.post('api/llms/createllm', createLLMData, 
+      setCreateLLMData(myData);
+      // Makes Request to AWS
+      const response = await axios.post('api/llms/createllm', myData,
         { timeout: 1800000 } // 30 minutes
       );
-      setCanSubmit(true);
       console.log(response);
       console.log(response.data);
       toast.success(response.data.message)
     } catch (error: any) {
       setCanSubmit(true);
       console.log(error);
-      toast.error("ERROR: " + error.response.data.error)
+      toast.error("ERROR: " + error.response)
     }
     return;
   }
   useEffect(() => {
+    //TODO: when the status changes from FALSE -> TRUE.  
+    //TODO: Run this useEffect to save the model to database
+    if (status === true) {
+      console.log(createLLMData);
+      if (createLLMData) {
+        console.log("Saving the model data - ", createLLMData);
+        axios.post('/api/llms/save-llm-model', { createLLMData })
+          .then((response) => {
+
+            console.log("model saved successfully...", response.data);
+            toast.success(response.data.message);
+            setCanSubmit(true);
+            router.push('/dashboard');
+            setCanSubmit(true);
+            return;
+          }).catch(((error: any) => {
+            setCanSubmit(true);
+            console.log("Some Error Occurred");
+            toast.error(error.response.data.error);
+          }))
+      }
+    }
+  }, [status])
+
+  // TODO: Make request to aws server checking for status..
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      console.log("Time Lapsed - ", timelapsed);
+
+      if (timelapsed > 12 * 60000) {
+        // poll every 1 min -> when the timelapsed exceeds 12 mins
+        console.log("It has been 12 mins, i will be polling every 1 min from now");
+        setTimeoutTime(60000);
+      }
+      console.log("Status - ", status);
+
+      if (status === false) {
+        console.log("Checking Fine-Tuning Status..");
+        try {
+          const response = await axios.get(`${process.env.AWS_PUBLIC_IP}/status`);
+          console.log("Fine tuning status - ", response.data);
+          setStatus(response.data.finished);
+        } catch (error) {
+          console.error("Error checking fine-tuning status:", error);
+        }
+      }
+      setTimelapsed((prev) => {
+        console.log(prev, typeof (prev));
+        console.log(timeoutTime, typeof (timeoutTime));
+        const newTimelapsed = prev + timeoutTime
+        return newTimelapsed
+      }); // Directly add numbers
+    }, timeoutTime); // Polls every 3 mins
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
+
+  useEffect(() => {
     console.log(userSessionDetails);
-  }, [sessionLoaded, formData])
+  }, [sessionLoaded])
   const fourbit_models = [
     "unsloth/Meta-Llama-3.1-8B-bnb-4bit",
     "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
@@ -339,6 +407,12 @@ export default function CreateNewLLM() {
                 transition={{ delay: 1.5, type: "spring", bounce: 0.1 }}
                 onSubmit={handleSubmit} className="space-y-6"
               >
+                <div className={`${canSubmit ? "hidden" : "flex"}`}>
+                  <h2 className={`text-md p-1 text-muted-foreground font-mono font-extrabold ${status ? "text-green-400" : "text-red-400"}`}>
+                    Fine-Tuning Status:
+                  </h2>
+                  <p className={`text-md p-1 font-mono font-extrabold text-muted-foreground ${status ? "text-green-400" : "text-red-400"}`}>{status ? "✅ Fine-tuning Completed!" : "⏳ Fine-tuning in Progress..."}</p>
+                </div>
                 <div>
                   <Label htmlFor="llmName" className="text-lg font-medium text-gray-700">LLM Name</Label>
                   <Input
@@ -348,8 +422,36 @@ export default function CreateNewLLM() {
                     required
                     className="mt-1 block w-full text-lg py-3 px-4"
                     placeholder="Enter a name for your LLM"
-                    onChange={(e) => setLlmName(e.target.value)}
+                    onChange={(e: any) => {
+                      const value = e.target.value;
+                      if (!/^[a-zA-Z0-9_]*$/.test(value)) {
+                        setLlmNameError("❌ Use underscores '_'  instead.");
+                      } else {
+                        setLlmNameError(""); // Clear error if valid
+                      }
+                      setLlmName(e.target.value)
+                      axios
+                        .get(`/api/llms/helper/check-if-llm-exists?name=${e.target.value}`)
+                        .then((response) => {
+                          console.log("response - ", response.data.exists);
+                          const llmNameTaken = response.data.exists;
+                          setLlmNameError(prev => `${llmNameTaken ? (prev.toString() + `The LLM name ${e.target.value} is already taken, try a difference one`) : prev}`)
+                        })
+                        .catch((error) => {
+                          console.log(`check-if-llm-exists : ERROR ${ error.message }`);
+                    })
+                    }}
                   />
+                  <p className='text-sm p-1 text-muted-foreground '>the llm name should not have space. <code>example: my_llm_name</code></p>
+                  {
+                    // if the llm name exist only then validate
+                    llmName && (
+                      llmNameError ?
+                        <p className="text-xs p-1 text-muted-foreground text-red-400">{llmNameError}</p>
+                        :
+                        <p className="text-xs p-1 text-muted-foreground text-green-500">Correct ✅✅✅</p>
+                    )
+                  }
                 </div>
                 <div>
                   <Label htmlFor="baseModel" className="text-lg font-medium text-gray-700">Base Model</Label>
@@ -400,83 +502,57 @@ export default function CreateNewLLM() {
                   </p>
                   <div className={`flex flex-wrap ${showDevOptions ? "w-[100%]" : "w-[30em]"}`}>
 
-                    {Array.from({ length: numCols }).map((_, idx) => (
-                      <motion.div
-                        initial={{ opacity: 0, x: -200 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 200 }}
-                        transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
-                        key={idx} className="flex border-[1px] my-2 mx-2"
-                      >
-                        <SelectInput
-                          className="w-[40%]"
-                          label="Column Type"
-                          value={inputColType[idx]}
-                          onChange={(value) => {
-                            setInputColType((prev) => {
-                              const newInputColType = [...prev]
-                              newInputColType[idx] = value
-                              return newInputColType
-                            })
+                    <div className='flex border-[1px] my-2 mx-2'>
+                      <SelectInput
+                        className="w-[40%]"
+                        label="Input Attribute"
+                        value={"Input Column"}
+                        onChange={(value) => {
+                        }}
+                        options={["Input Column"]}
+                      />
+                      <div className="inp m-2 p-2">
+                        <Label>Column Name</Label>
+                        <Input
+                          name={`inputColumnName`}
+                          type="text"
+                          value={inputColValue}
+                          required
+                          className="my-2 py-2 space-y-2 w-[100%] text-lg"
+                          placeholder="Column name"
+                          onChange={(e: any) => {
+                            // Add logic to handle column name changes if needed
+                            setInputColValue(e.target.value)
                           }}
-                          options={["Input Column", "Target"]}
                         />
-                        <div className="inp m-2 p-2">
-                          <Label>Column Name</Label>
-                          <Input
-                            id={`columnName-${idx}`}
-                            name={`columnName-${idx}`}
-                            type="text"
-                            value={inputColValue[idx]}
-                            required
-                            className="my-2 py-2 space-y-2 w-[100%] text-lg"
-                            placeholder="Column name"
-                            onChange={(e: any) => {
-                              // Add logic to handle column name changes if needed
-                              setInputColValue((prev) => {
-                                const columnName = e.target.value
-                                const newInputColValue: string[] = [...prev]
-                                newInputColValue[idx] = columnName
-                                return newInputColValue
-                              })
-                            }}
-                          />
-                        </div>
-                        <Button
-                          type='button'
-                          variant="ghost"
-                          className='mr-2 mt-8'
-                          onClick={() => {
-                            const newInputColType = inputColType.filter((val, i) => {
-                              if (i != idx)
-                                return val
-                            })
-                            setInputColType(newInputColType);
-
-                            const newInputColValue = inputColValue.filter((val, i) => {
-                              if (i != idx)
-                                return val
-                            });
-                            setInputColValue(newInputColValue);
-                            setNumCols(prev => prev - 1);
+                      </div>
+                    </div>
+                    <div className='flex border-[1px] my-2 mx-2'>
+                      <SelectInput
+                        className="w-[40%]"
+                        label="Input Attribute"
+                        value={"Target Column"}
+                        onChange={(value) => {
+                        }}
+                        options={["Target Column"]}
+                      />
+                      <div className="inp m-2 p-2">
+                        <Label>Column Name</Label>
+                        <Input
+                          name={`inputColumnName`}
+                          type="text"
+                          value={targetColValue}
+                          required
+                          className="my-2 py-2 space-y-2 w-[100%] text-lg"
+                          placeholder="Column name"
+                          onChange={(e: any) => {
+                            // Add logic to handle column name changes if needed
+                            setTargetColValue(e.target.value)
                           }}
-                        >
-                          <X className='bg-white' />
-                        </Button>
-                      </motion.div>
-                    ))}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <Button
-                    type="button"
-                    className="m-3 p-2 rounded-sm bg-slate-200"
-                    variant="outline"
-                    onClick={() => {
-                      inputColType.push("Input Column")
-                      setNumCols((prev) => prev + 1)
-                    }}
-                  >
-                    Add column
-                  </Button>
                 </div>
                 <div>
                   <Label htmlFor='description' className='text-lg font-medium text-gray-700'>Explain the Purpose</Label>
