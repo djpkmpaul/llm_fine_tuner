@@ -48,10 +48,25 @@ type TrainingArg = {
   report_to: string, // none
 }
 
+type userSessionDetailsType = {
+  username: string,
+  email: string
+}
+type createLLMDataType = {
+  llmName: string,
+  baseModel: string,
+  description: string,
+  modelParams: ModelParams,
+  trainingArguments: TrainingArg,
+  inputColValue: string,
+  targetColValue: string,
+  userSessionDetails: userSessionDetailsType
+}
+
 export default function CreateNewLLM() {
   const router = useRouter();
   const [llmName, setLlmName] = useState("");
-  const [llmNameError, setLlmNameError] = useState("")
+  const [llmNameError, setLlmNameError] = useState<string[]>([])
   const [baseModel, setBaseModel] = useState("");
   const [formData, setFormData] = useState<FormData>(new FormData());
   const [showDevOptions, setShowDevOptions] = useState(false)
@@ -67,10 +82,9 @@ export default function CreateNewLLM() {
 
   // AWS Polling Variables
   const [status, setStatus] = useState(false);
-  const [timeoutTime, setTimeoutTime] = useState<number>(1 * 60000); // 3 mins
+  const [timeoutTime, setTimeoutTime] = useState<number>(15000); // 3 mins
   const [timelapsed, setTimelapsed] = useState<number>(0);
 
-  const [createLLMData, setCreateLLMData] = useState<Object>();
   const [modelParams, setModelParams] = useState<ModelParams>({
     r: 16,
     target_modules: ['q_proj'],
@@ -96,6 +110,16 @@ export default function CreateNewLLM() {
     output_dir: "outputs",
     report_to: "none",
   })
+  const [createLLMData, setCreateLLMData] = useState<createLLMDataType>({
+    llmName: llmName,
+    baseModel: baseModel,
+    description: description,
+    modelParams: modelParams,
+    trainingArguments: trainingArguments,
+    inputColValue: inputColValue,
+    targetColValue: targetColValue,
+    userSessionDetails: userSessionDetails
+  });
   const advanceOptionStyles = `
   developer-options 
   transition-all 
@@ -239,10 +263,12 @@ export default function CreateNewLLM() {
     setCanSubmit(false)
     if (!llmName || !baseModel) {
       toast.error("Please fill in all fields");
+      setCanSubmit(true)
       return
     }
-    if (llmNameError) {
-      toast.error(llmNameError);
+    if (llmNameError.length > 0) {
+      // toast.error(llmNameError);
+      setCanSubmit(true)
       return;
     }
     toast.success(`Creating your Custom LLM!\n${llmName} : ${baseModel}`);
@@ -258,7 +284,7 @@ export default function CreateNewLLM() {
       console.log(awsResponse);
       toast.success(`File Uploaded Successfully. ${awsResponse}`)
 
-      const myData = {
+      const myData: createLLMDataType = {
         llmName: llmName,
         baseModel: baseModel,
         description: description,
@@ -266,8 +292,10 @@ export default function CreateNewLLM() {
         trainingArguments: trainingArguments,
         inputColValue: inputColValue,
         targetColValue: targetColValue,
-        userSessionDetails: userSessionDetails
+        userSessionDetails
       }
+      console.log("myData", myData);
+
       setCreateLLMData(myData);
       // Makes Request to AWS
       const response = await axios.post('api/llms/createllm', myData,
@@ -287,10 +315,10 @@ export default function CreateNewLLM() {
     //TODO: when the status changes from FALSE -> TRUE.  
     //TODO: Run this useEffect to save the model to database
     if (status === true) {
-      console.log(createLLMData);
       if (createLLMData) {
         console.log("Saving the model data - ", createLLMData);
-        axios.post('/api/llms/save-llm-model', { createLLMData })
+        console.log("Usersession details  - ", createLLMData.userSessionDetails.username);
+        axios.post('/api/llms/save-llm-model', createLLMData)
           .then((response) => {
 
             console.log("model saved successfully...", response.data);
@@ -310,39 +338,76 @@ export default function CreateNewLLM() {
 
   // TODO: Make request to aws server checking for status..
   useEffect(() => {
+    console.log("CreateLLMData - ", createLLMData);
     const interval = setInterval(async () => {
       console.log("Time Lapsed - ", timelapsed);
 
       if (timelapsed > 12 * 60000) {
-        // poll every 1 min -> when the timelapsed exceeds 12 mins
-        console.log("It has been 12 mins, i will be polling every 1 min from now");
+        console.log("It has been 12 mins, I will be polling every 1 min from now");
         setTimeoutTime(60000);
       }
-      console.log("Status - ", status);
 
+      console.log("Status - ", status);
       if (status === false) {
         console.log("Checking Fine-Tuning Status..");
+        console.log("CreateLLMData Inside - ", createLLMData);
+        console.log("UserSession details Inside  - ", createLLMData?.userSessionDetails);
+
         try {
           const response = await axios.get(`${process.env.AWS_PUBLIC_IP}/status`);
-          console.log("Fine tuning status - ", response.data);
+          console.log("Fine-tuning status - ", response.data);
           setStatus(response.data.finished);
         } catch (error) {
           console.error("Error checking fine-tuning status:", error);
         }
       }
-      setTimelapsed((prev) => {
-        console.log(prev, typeof (prev));
-        console.log(timeoutTime, typeof (timeoutTime));
-        const newTimelapsed = prev + timeoutTime
-        return newTimelapsed
-      }); // Directly add numbers
-    }, timeoutTime); // Polls every 3 mins
 
-    return () => clearInterval(interval); // Cleanup on unmount
-  }, []);
+      setTimelapsed((prev) => {
+        console.log(`timeout ${timeoutTime}ms`);
+        return prev + timeoutTime;
+      });
+
+    }, timeoutTime);
+
+    return () => clearInterval(interval);
+  }, [createLLMData, status, timeoutTime, timelapsed]);  // 👈 Add dependencies here
 
   useEffect(() => {
-    console.log(userSessionDetails);
+    console.log("CreateLLM Data changed");
+    console.log("new data - ", createLLMData);
+
+  }, [createLLMData])
+  useEffect(() => {
+    if (sessionLoaded) {
+      console.log("Session successfully Loaded");
+      const myUsername = userSessionDetails.username
+      const myEmail = userSessionDetails.email
+      console.log(myUsername, myEmail);
+
+      setCreateLLMData(
+        {
+          llmName: llmName,
+          baseModel: baseModel,
+          description: description,
+          modelParams: modelParams,
+          trainingArguments: trainingArguments,
+          inputColValue: inputColValue,
+          targetColValue: targetColValue,
+          userSessionDetails: {
+            username: myUsername,
+            email: myEmail
+          }
+        }
+      )
+    }
+  }, [sessionLoaded])
+  useEffect(() => {
+    console.log("Session loaded...");
+    const myUsername = userSessionDetails.username
+    const myEmail = userSessionDetails.email
+    console.log(myUsername);
+    console.log(myEmail);
+
   }, [sessionLoaded])
   const fourbit_models = [
     "unsloth/Meta-Llama-3.1-8B-bnb-4bit",
@@ -419,35 +484,44 @@ export default function CreateNewLLM() {
                     id="llmName"
                     name="llmName"
                     type="text"
+                    value={llmName}
                     required
                     className="mt-1 block w-full text-lg py-3 px-4"
                     placeholder="Enter a name for your LLM"
                     onChange={(e: any) => {
+                      console.log("Value changed...");
+
                       const value = e.target.value;
                       if (!/^[a-zA-Z0-9_]*$/.test(value)) {
-                        setLlmNameError("❌ Use underscores '_'  instead.");
+                        setLlmNameError(prev => ["Use underscores '_'  instead."]);
                       } else {
-                        setLlmNameError(""); // Clear error if valid
+                        setLlmNameError([]); // Clear error if valid
                       }
                       setLlmName(e.target.value)
-                      axios
-                        .get(`/api/llms/helper/check-if-llm-exists?name=${e.target.value}`)
-                        .then((response) => {
-                          console.log("response - ", response.data.exists);
-                          const llmNameTaken = response.data.exists;
-                          setLlmNameError(prev => `${llmNameTaken ? (prev.toString() + `The LLM name ${e.target.value} is already taken, try a difference one`) : prev}`)
-                        })
-                        .catch((error) => {
-                          console.log(`check-if-llm-exists : ERROR ${ error.message }`);
-                    })
+                      value && (
+                        axios
+                          .get(`/api/llms/helper/check-if-llm-exists?name=${value}`)
+                          .then((response) => {
+                            console.log("response - ", response.data.exists);
+                            const llmNameTaken = response.data.exists;
+                            const nameTakenError = `The LLM name "${value}" is already taken, try a difference one`
+                            console.log("nameTakenError - ", nameTakenError);
+                            llmNameTaken && setLlmNameError(prev => [...prev, nameTakenError])
+                          })
+                          .catch((error) => {
+                            console.log(`check-if-llm-exists : ERROR ${error.message}`);
+                          })
+
+                      )
+                      console.log("LLM NAME ERROR - " , llmNameError);
                     }}
                   />
                   <p className='text-sm p-1 text-muted-foreground '>the llm name should not have space. <code>example: my_llm_name</code></p>
                   {
                     // if the llm name exist only then validate
                     llmName && (
-                      llmNameError ?
-                        <p className="text-xs p-1 text-muted-foreground text-red-400">{llmNameError}</p>
+                      llmNameError.length > 0 ?
+                        llmNameError.map((err, idx) => <p className="text-xs p-1 text-muted-foreground text-red-400">❌ {idx + 1}. {err}</p>)
                         :
                         <p className="text-xs p-1 text-muted-foreground text-green-500">Correct ✅✅✅</p>
                     )
@@ -743,8 +817,11 @@ export default function CreateNewLLM() {
                   transition={{ delay: .1, type: "spring", bounce: 0.1 }}
 
                 >
+                  <Button type='submit' className='w-full text-lg py-6'>
+                    Create Your LLM
+                  </Button>
 
-                  {
+                  {/* {
                     canSubmit ?
                       <Button type='submit' className='w-full text-lg py-6'>
                         Create Your LLM
@@ -753,7 +830,7 @@ export default function CreateNewLLM() {
                       <Button type='button' variant="ghost" className='w-full text-sm py-6'>
                         Please wait we're processing your request..
                       </Button>
-                  }
+                  } */}
                   {/* <Button type='submit' className='w-full text-lg py-6'>
                   Create Your LLM
                 </Button> */}

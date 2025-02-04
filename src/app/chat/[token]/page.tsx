@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast'
+import ErrorModal from '@/app/components/ErrorModal'
 interface Message {
   type: 'user' | 'bot'
   content: string
@@ -13,7 +14,7 @@ interface Message {
 
 export default function ChatPage({ params }: { params: Promise<{ token: string }> }) {
   const myParamPromise = React.use(params)
-  const myToken = myParamPromise.token // llmName
+  const llmName = myParamPromise.token // llmName
 
   const [loading, setLoading] = useState<boolean>(true)
   const [messages, setMessages] = useState<Message[]>([])
@@ -21,7 +22,8 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [ollamaRunning, setOllamaRunning] = useState(false);
   const [modelPulled, setModelPulled] = useState(true);
-  const [canChat, setCanChat] = useState(true)
+  const [canChat, setCanChat] = useState(true);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
 
   useEffect(() => {
     // when the page is first loaded 
@@ -48,7 +50,7 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
   useEffect(() => {
     // make post request to /api/llms/pull-model
     if (modelPulled == false) {
-      axios.post('/api/llms/pull-model', { modelName: myToken })
+      axios.post('/api/llms/pull-model', { modelName: llmName })
         .then((response) => {
           console.log(response);
           setModelPulled(true);
@@ -98,17 +100,17 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
     setCanChat(false)
     console.log(inputMessage);
     try {
-      console.log(`Sending post request to LegacyPaul0809/${myToken}`);
+      console.log(`Sending post request to LegacyPaul0809/${llmName}`);
       setMessages(prev => [...prev, { type: 'user', content: inputMessage }])
       setInputMessage('')
 
-      const response = await axios.post('/api/llms/chat', { inputMessage, myToken });
+      const response = await axios.post('/api/llms/chat', { inputMessage, llmName });
       console.log("OLLAMA RESPONSE - ", response);
       console.log(response.data);
-      
+
       const answer = response.data.message
       console.log(answer);
-      
+
       // Simulate bot response
       setMessages(prev => [...prev, { type: 'bot', content: answer }])
       setCanChat(true)
@@ -118,9 +120,10 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
       console.log(error.response.data.error);
       toast.error(error.response.data.error);
       const myError = error.response.data.error;
-      if (myError == `model "LegacyPaul0809/${myToken}" not found, try pulling it first`) {
+      if (myError == `model "LegacyPaul0809/${llmName}" not found, try pulling it first`) {
         console.log("setting model pulled to FALSE");
-        setModelPulled(false);
+        // setModelPulled(false);
+        setIsErrorModalOpen(true)
       }
     }
   }
@@ -155,7 +158,7 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
             >
               <Toaster />
               <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Chat {myToken}</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Chat {llmName}</h1>
                 <ChatBubbleIllustration />
               </div>
               <div
@@ -207,12 +210,11 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
                       />
                       <>
                         {canChat ?
-                          <Button onClick={handleSendMessage}>Send</Button>
+                          <Button onClick={handleSendMessage} disabled={!canChat} >Send</Button>
                           :
                           <div className='flex justify-center'>
-                            
-                              <LoadingSpinner />
-                            
+                            <Button onClick={handleSendMessage} disabled={!canChat} >Send</Button>
+                            <LoadingSpinner />
                           </div>
                         }
                       </>
@@ -222,9 +224,10 @@ export default function ChatPage({ params }: { params: Promise<{ token: string }
             </motion.div>
           )}
         </AnimatePresence>
+        <ErrorModal isOpen={isErrorModalOpen} onClose={() => setIsErrorModalOpen(false)} llmName={llmName} />
       </main>
     </div>
   )
 }
 
- // "Can you help me find related materials of Bohr Radius?
+// "Can you help me find related materials of Bohr Radius?

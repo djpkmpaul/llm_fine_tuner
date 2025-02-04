@@ -162,8 +162,13 @@ export default function DashBoard() {
 
     const chatPageBtn = (params: any) => {
         const handleChatClick = () => {
-            console.log(`/chat/${params.value}`);
-            router.push(`/chat/${params.value}`);
+            console.log("HANDLING CHAT CLICK");
+            
+            const llmName = params.data.llmName
+            console.log("LLM NAME - ", llmName);
+            
+            console.log(`/chat/${llmName}`);
+            router.push(`/chat/${llmName}`);
         }
         return (
             <Button className="w-[100%]" onClick={handleChatClick} variant="secondary">

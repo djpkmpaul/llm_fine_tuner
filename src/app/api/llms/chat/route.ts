@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     try {
         console.log("Chat page - POST request Recieved");
         const data = await request.json();
-        const llmName = data.myToken;
+        const llmName = data.llmName;
         const inputMessage = data.inputMessage;
         console.log(data);
         const response = await ollama.chat({

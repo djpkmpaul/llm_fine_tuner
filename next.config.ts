@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   env:{
-    AWS_PUBLIC_IP:"http://13.201.194.1"
+    AWS_PUBLIC_IP:"http://3.110.188.254"
   },
   async headers() {
     return [

@@ -15,6 +15,9 @@ const llmSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please choose LLM Model"]
   },
+  ollamaModelName: {
+    type: String
+  },
   tokenId: {
     type: String,
     required: [true, "Please provide LLM Token"],

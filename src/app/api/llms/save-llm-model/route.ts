@@ -8,15 +8,15 @@ export async function POST(request: NextRequest) {
 
         let createLLMData = await request.json();
         console.log(createLLMData);
-        /* 
-        
-         */
+        console.log("session details - ",createLLMData.userSessionDetails);
+        console.log("username - ",createLLMData.userSessionDetails.username);
+
         const newModel = new Llm({
             name: createLLMData.llmName,
             baseModel: createLLMData.baseModel,
-            modelParams: createLLMData.modelParams
+            modelParams: createLLMData.modelParams, 
         });
-
+        
         const username = createLLMData.userSessionDetails.username;
         const foundUser = await User.findOne({ username });
 
@@ -39,6 +39,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "Created LLM Successfully", success: true, savedModel }, { status: 200 });
     } catch (error: any) {
         console.log("Error occurred - ", error);
-        return NextResponse.json({ error: error.message, success: true }, { status: 200 });
+        return NextResponse.json({ error: error.message, success: false }, { status: 500 });
     }
 }
